@@ -31,23 +31,54 @@ async function handleResponse<T>(response: Response): Promise<T> {
     return response.json();
 }
 
+
+const TOKEN_KEY = "vectorgo_token";
+
+function getAuthHeader(): HeadersInit {
+    const token = localStorage.getItem(TOKEN_KEY);
+    return token ? { "Authorization": `Bearer ${token}` } : {};
+}
+
 export const api = {
+    isLoggedIn(): boolean {
+        return !!localStorage.getItem(TOKEN_KEY);
+    },
+
+    async login(username: string, password: string): Promise<void> {
+        const response = await fetch(`${API_BASE_URL}/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password }),
+        });
+
+        const data = await handleResponse<{ token: string }>(response);
+        localStorage.setItem(TOKEN_KEY, data.token);
+    },
+
+    logout() {
+        localStorage.removeItem(TOKEN_KEY);
+    },
+
     async uploadPDF(formData: FormData): Promise<ProcessingResult> {
         const response = await fetch(`${API_BASE_URL}/upload`, {
             method: "POST",
+            headers: { ...getAuthHeader() },
             body: formData,
         });
         return handleResponse<ProcessingResult>(response);
     },
 
     async searchVectors(query: string): Promise<SearchResult> {
-        const response = await fetch(`${API_BASE_URL}/search?q=${encodeURIComponent(query)}`);
+        const response = await fetch(`${API_BASE_URL}/search?q=${encodeURIComponent(query)}`, {
+            headers: getAuthHeader()
+        });
         return handleResponse<SearchResult>(response);
     },
 
     async resetCollection(): Promise<{ status: string }> {
         const response = await fetch(`${API_BASE_URL}/reset`, {
             method: "POST",
+            headers: getAuthHeader(),
         });
         return handleResponse<{ status: string }>(response);
     }

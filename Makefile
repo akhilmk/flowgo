@@ -91,6 +91,9 @@ run:
 		-e CHROMA_URL=http://vectorgo-chromadb:8000 \
 		-e EMBEDDING_MODEL=$(EMBEDDING_MODEL) \
 		-e COLLECTION_NAME=$(COLLECTION_NAME) \
+		-e ADMIN_USERNAME=$(ADMIN_USERNAME) \
+		-e ADMIN_PASSWORD=$(ADMIN_PASSWORD) \
+		-e JWT_SECRET=$(JWT_SECRET) \
 		-e PORT=8080 \
 		$(IMAGE_NAME):latest
 	@echo "✓ VectorGo running at http://localhost:8080"
