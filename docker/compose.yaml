@@ -12,7 +12,7 @@ services:
     image: chromadb/chroma:latest
     container_name: vectorgo-chromadb
     volumes:
-      - chroma_data:/chroma/chroma
+      - chroma_data:/data
     environment:
       - IS_PERSISTENT=TRUE
     restart: always
