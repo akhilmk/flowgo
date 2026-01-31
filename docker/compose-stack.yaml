@@ -1,0 +1,25 @@
+# to deploy in server
+# docker compose -f compose-stack.yaml up -d
+# docker run --rm -v vectorgo-dev_chroma_data:/data -v $(pwd):/backup alpine tar czf /backup/chroma_data.tar.gz -C /data .
+# docker run --rm -v vectorgo_chroma_data:/data -v $(pwd):/backup alpine tar xzf /backup/chroma_data.tar.gz -C /data
+
+services:
+
+  chromadb:
+    image: chromadb/chroma:latest
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - chroma_data:/data
+    environment:
+      - IS_PERSISTENT=TRUE
+    restart: always
+    networks:
+      - vectorgo-dev
+
+networks:
+  vectorgo-dev:
+    name: vectorgo-dev
+
+volumes:
+  chroma_data:
