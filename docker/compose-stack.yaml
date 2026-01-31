@@ -16,10 +16,13 @@ services:
     restart: always
     networks:
       - vectorgo-dev
+      - flowise_default
 
 networks:
   vectorgo-dev:
     name: vectorgo-dev
+  flowise_default:
+    external: true
 
 volumes:
   chroma_data:
