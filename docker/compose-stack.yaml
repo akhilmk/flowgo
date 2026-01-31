@@ -13,6 +13,7 @@ services:
       - chroma_data:/data
     environment:
       - IS_PERSISTENT=TRUE
+      - CHROMA_SERVER_CORS_ALLOW_ORIGINS=["*"]
     restart: always
     networks:
       - flowise_default
