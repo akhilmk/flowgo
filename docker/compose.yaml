@@ -106,12 +106,9 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=${TRAEFIK_NETWORK}"
-      - "traefik.http.routers.flowgo.rule=Host(`${FLOWISE_SUBDOMAIN}.${DOMAIN_NAME}`) && PathPrefix(`${APP_ROUTE_PATH}`)"
+      - "traefik.http.routers.flowgo.rule=Host(`${FLOWGO_SUBDOMAIN}.${DOMAIN_NAME}`)"
       - "traefik.http.routers.flowgo.entrypoints=websecure"
       - "traefik.http.routers.flowgo.tls.certresolver=${TRAEFIK_CERT_RESOLVER}"
-      # Middleware to strip ${APP_ROUTE_PATH} prefix so app sees /
-      - "traefik.http.middlewares.flowgo-strip.stripprefix.prefixes=${APP_ROUTE_PATH}"
-      - "traefik.http.routers.flowgo.middlewares=flowgo-strip"
       - "traefik.http.services.flowgo.loadbalancer.server.port=${APP_PORT}"
 
 networks:
