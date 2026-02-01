@@ -54,7 +54,7 @@ services:
       - "traefik.http.routers.flowise.tls.certresolver=${TRAEFIK_CERT_RESOLVER}"
       - "traefik.http.services.flowise.loadbalancer.server.port=${FLOWISE_PORT}"
 
-  # Profile: Upload (VectorGo Stack)
+  # Profile: Upload (Flowgo Stack)
   ollama:
     image: ollama/ollama:latest
     profiles: ["upload"]
@@ -82,7 +82,7 @@ services:
     networks:
       - default
 
-  vectorgo:
+  flowgo:
     image: ${APP_IMAGE}:${APP_IMAGE_TAG}
     restart: always
     profiles: ["upload"]
@@ -105,13 +105,13 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=${TRAEFIK_NETWORK}"
       # Route: flow.domain.com/upload
-      - "traefik.http.routers.vectorgo.rule=Host(`${FLOWISE_SUBDOMAIN}.${DOMAIN_NAME}`) && PathPrefix(`/upload`)"
-      - "traefik.http.routers.vectorgo.entrypoints=websecure"
-      - "traefik.http.routers.vectorgo.tls.certresolver=${TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.flowgo.rule=Host(`${FLOWISE_SUBDOMAIN}.${DOMAIN_NAME}`) && PathPrefix(`/upload`)"
+      - "traefik.http.routers.flowgo.entrypoints=websecure"
+      - "traefik.http.routers.flowgo.tls.certresolver=${TRAEFIK_CERT_RESOLVER}"
       # Middleware to strip /upload prefix so app sees /
-      - "traefik.http.middlewares.vectorgo-strip.stripprefix.prefixes=/upload"
-      - "traefik.http.routers.vectorgo.middlewares=vectorgo-strip"
-      - "traefik.http.services.vectorgo.loadbalancer.server.port=${PORT}"
+      - "traefik.http.middlewares.flowgo-strip.stripprefix.prefixes=/upload"
+      - "traefik.http.routers.flowgo.middlewares=flowgo-strip"
+      - "traefik.http.services.flowgo.loadbalancer.server.port=${PORT}"
 
 networks:
   default:

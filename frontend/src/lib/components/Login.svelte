@@ -39,7 +39,7 @@
         </div>
       </div>
       <h1 class="text-2xl font-bold text-slate-800">Welcome Back</h1>
-      <p class="text-slate-500 mt-2">Sign in to access VectorGo</p>
+      <p class="text-slate-500 mt-2">Sign in to access Flowgo</p>
     </div>
 
     <form on:submit|preventDefault={handleLogin} class="space-y-6">

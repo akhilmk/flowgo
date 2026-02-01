@@ -1,4 +1,4 @@
-// REST API client for VectorGo
+// REST API client for Flowgo
 
 const API_BASE_URL = "/api";
 
@@ -39,7 +39,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
 }
 
 
-const TOKEN_KEY = "vectorgo_token";
+const TOKEN_KEY = "flowgo_token";
 
 function getAuthHeader(): HeadersInit {
     const token = localStorage.getItem(TOKEN_KEY);

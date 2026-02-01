@@ -1,4 +1,4 @@
-# VectorGo Development Commands
+# Flowgo Development Commands
 
 This project uses a `Makefile` to simplify development tasks. Environment variables are automatically loaded from `docker/.env.dev`.
 
@@ -19,7 +19,7 @@ This project uses a `Makefile` to simplify development tasks. Environment variab
 
 ## App Run Commands
 
-- `make run`: Starts the VectorGo application container locally. It automatically handles container removal if one is already running.
+- `make run`: Starts the Flowgo application container locally. It automatically handles container removal if one is already running.
 - `make logs`: Follows the application container logs.
 - `make app-shell`: Opens an interactive shell inside the running application container for debugging.
 
@@ -38,7 +38,7 @@ This project uses a `Makefile` to simplify development tasks. Environment variab
 
 ## API Endpoints
 
-VectorGo provides the following REST API endpoints:
+Flowgo provides the following REST API endpoints:
 
 ### Health Check
 - **GET** `/` - Returns service status and version information
@@ -74,7 +74,7 @@ VectorGo provides the following REST API endpoints:
 
 2. **Pull the Ollama embedding model** (first time only):
    ```bash
-   docker exec -it vectorgo-ollama ollama pull embeddinggemma:300m
+   docker exec -it flowgo-ollama ollama pull embeddinggemma:300m
    ```
 
 3. **Install frontend dependencies** (first time only):
@@ -140,19 +140,19 @@ make dev-down
 ### Ollama Model Not Found
 If you get embedding errors, ensure the model is pulled:
 ```bash
-docker exec -it vectorgo-ollama ollama pull embeddinggemma:300m
+docker exec -it flowgo-ollama ollama pull embeddinggemma:300m
 ```
 
 ### ChromaDB Connection Issues
 Verify ChromaDB is running:
 ```bash
-docker ps | grep vectorgo-chromadb
+docker ps | grep flowgo-chromadb
 ```
 
 ### Network Issues
-Ensure the `vectorgo-dev` network exists:
+Ensure the `flowgo-dev` network exists:
 ```bash
-docker network ls | grep vectorgo-dev
+docker network ls | grep flowgo-dev
 ```
 
 If not, restart the dev environment:

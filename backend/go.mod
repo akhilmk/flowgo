@@ -1,4 +1,4 @@
-module github.com/akhilmk/vectorgo
+module github.com/akhilmk/flowgo
 
 go 1.25.5
 

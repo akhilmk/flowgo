@@ -1,4 +1,4 @@
-# Makefile for VectorGo development environment
+# Makefile for Flowgo development environment
 
 # Load environment variables from docker/.env.dev if it exists
 ifneq (,$(wildcard docker/.env.dev))
@@ -9,13 +9,13 @@ endif
 # Configuration
 COMPOSE_FILE ?= docker/compose.dev.yaml
 DOCKER_COMPOSE ?= docker compose
-IMAGE_NAME := akhilmk01/vectorgo
-CONTAINER_NAME := vectorgo
+IMAGE_NAME := akhilmk01/flowgo
+CONTAINER_NAME := flowgo
 NODE_IMAGE := node:24-alpine
 USER_ID := $(shell id -u)
 GROUP_ID := $(shell id -g)
 COMPOSE_ENV := USER_ID=$(USER_ID) GROUP_ID=$(GROUP_ID)
-DOCKER_EXEC_NODE := docker exec -i vectorgo-node-dev
+DOCKER_EXEC_NODE := docker exec -i flowgo-node-dev
 
 .PHONY: dev-up dev-down dev-logs \
         frontend-install frontend-audit-fix frontend-build build-frontend build-backend build-all \
@@ -25,11 +25,11 @@ DOCKER_EXEC_NODE := docker exec -i vectorgo-node-dev
 # --- Development Environment Commands ---
 
 dev-up:
-	@echo "Starting VectorGo dev environment (Ollama + ChromaDB + Node builder)..."
+	@echo "Starting Flowgo dev environment (Ollama + ChromaDB + Node builder)..."
 	$(COMPOSE_ENV) $(DOCKER_COMPOSE) -f $(COMPOSE_FILE) --env-file docker/.env.dev up -d
 
 dev-down:
-	@echo "Stopping VectorGo dev environment..."
+	@echo "Stopping Flowgo dev environment..."
 	$(COMPOSE_ENV) $(DOCKER_COMPOSE) -f $(COMPOSE_FILE) --env-file docker/.env.dev down -v
 
 dev-logs:
@@ -38,21 +38,21 @@ dev-logs:
 # --- Build Commands ---
 
 frontend-install:
-	@if [ $$(docker ps -q -f name=vectorgo-node-dev) ]; then \
+	@if [ $$(docker ps -q -f name=flowgo-node-dev) ]; then \
 		$(DOCKER_EXEC_NODE) npm install; \
 	else \
 		docker run --rm -v $(PWD)/frontend:/app -w /app --user $(USER_ID):$(GROUP_ID) $(NODE_IMAGE) npm install; \
 	fi
 
 frontend-audit-fix:
-	@if [ $$(docker ps -q -f name=vectorgo-node-dev) ]; then \
+	@if [ $$(docker ps -q -f name=flowgo-node-dev) ]; then \
 		$(DOCKER_EXEC_NODE) npm audit fix; \
 	else \
 		docker run --rm -v $(PWD)/frontend:/app -w /app --user $(USER_ID):$(GROUP_ID) $(NODE_IMAGE) npm audit fix; \
 	fi
 
 frontend-build:
-	@if [ $$(docker ps -q -f name=vectorgo-node-dev) ]; then \
+	@if [ $$(docker ps -q -f name=flowgo-node-dev) ]; then \
 		$(DOCKER_EXEC_NODE) npm run build; \
 	else \
 		docker run --rm -v $(PWD)/frontend:/app -w /app --user $(USER_ID):$(GROUP_ID) $(NODE_IMAGE) npm run build; \
@@ -66,7 +66,7 @@ build-frontend: frontend-build
 
 build-backend:
 	@echo "Building Go backend..."
-	cd backend && CGO_ENABLED=0 GOOS=linux go build -o ../bin/vectorgo ./cmd/server
+	cd backend && CGO_ENABLED=0 GOOS=linux go build -o ../bin/flowgo ./cmd/server
 	@echo "✓ Backend built successfully"
 
 build-all: build-backend build-frontend
@@ -85,10 +85,10 @@ run:
 	docker run -d \
 		--name $(CONTAINER_NAME) \
 		-p 8080:8080 \
-		--network vectorgo-dev \
+		--network flowgo-dev \
 		-v $(PWD)/frontend/dist:/app/frontend/dist:ro \
-		-e OLLAMA_URL=http://vectorgo-ollama:11434 \
-		-e CHROMA_URL=http://vectorgo-chromadb:8000 \
+		-e OLLAMA_URL=http://flowgo-ollama:11434 \
+		-e CHROMA_URL=http://flowgo-chromadb:8000 \
 		-e EMBEDDING_MODEL=$(EMBEDDING_MODEL) \
 		-e COLLECTION_NAME=$(COLLECTION_NAME) \
 		-e ADMIN_USERNAME=$(ADMIN_USERNAME) \
@@ -96,7 +96,7 @@ run:
 		-e JWT_SECRET=$(JWT_SECRET) \
 		-e PORT=8080 \
 		$(IMAGE_NAME):latest
-	@echo "✓ VectorGo running at http://localhost:8080"
+	@echo "✓ Flowgo running at http://localhost:8080"
 
 logs:
 	docker logs -f $(CONTAINER_NAME)
@@ -127,7 +127,7 @@ docker-stop:
 	-docker stop $(CONTAINER_NAME) 2>/dev/null
 
 help:
-	@echo "VectorGo Development Commands"
+	@echo "Flowgo Development Commands"
 	@echo ""
 	@echo "Development Environment:"
 	@echo "  dev-up          - Start dev environment (Ollama + ChromaDB + Node builder)"
@@ -143,7 +143,7 @@ help:
 	@echo "  build-backend   - Build Go backend"
 	@echo ""
 	@echo "Runtime Commands:"
-	@echo "  run             - Run the VectorGo container locally"
+	@echo "  run             - Run the Flowgo container locally"
 	@echo "  logs            - Follow app container logs"
 	@echo "  app-shell       - Open shell inside the app container"
 	@echo ""

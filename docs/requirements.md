@@ -1,8 +1,8 @@
-# VectorGo - Requirements Document
+# Flowgo - Requirements Document
 
 ## Overview
 
-VectorGo is a PDF processing and semantic search application that enables users to upload PDF documents, automatically chunk and embed the text content, and perform intelligent semantic searches across their document collection.
+Flowgo is a PDF processing and semantic search application that enables users to upload PDF documents, automatically chunk and embed the text content, and perform intelligent semantic searches across their document collection.
 
 ---
 
@@ -96,7 +96,7 @@ VectorGo is a PDF processing and semantic search application that enables users 
 
 #### 6.3 Information Display
 - **FR-6.3.1**: The UI shall display a "How It Works" section explaining the 3-step process
-- **FR-6.3.2**: The UI shall show VectorGo branding and logo
+- **FR-6.3.2**: The UI shall show Flowgo branding and logo
 - **FR-6.3.3**: The UI shall use a modern, gradient-based design aesthetic
 
 ---

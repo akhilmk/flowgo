@@ -5,13 +5,13 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/akhilmk/vectorgo/internal/auth"
-	"github.com/akhilmk/vectorgo/internal/document"
+	"github.com/akhilmk/flowgo/internal/auth"
+	"github.com/akhilmk/flowgo/internal/document"
 )
 
 func main() {
 	port := getEnv("PORT", "8080")
-	log.Printf("VectorGo server starting on :%s...", port)
+	log.Printf("Flowgo server starting on :%s...", port)
 
 	mux := http.NewServeMux()
 
@@ -41,7 +41,7 @@ func handleHealth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(`{"status":"ok","service":"VectorGo","version":"1.0.0"}`))
+	w.Write([]byte(`{"status":"ok","service":"Flowgo","version":"1.0.0"}`))
 }
 
 func getEnv(key, defaultValue string) string {

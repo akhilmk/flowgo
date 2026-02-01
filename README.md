@@ -1,10 +1,10 @@
-# VectorGo
+# Flowgo
 
-VectorGo is a modern PDF processing and semantic search application that leverages vector embeddings to enable intelligent document search and retrieval.
+Flowgo is a modern PDF processing and semantic search application that leverages vector embeddings to enable intelligent document search and retrieval.
 
 ## 🚀 Overview
 
-VectorGo allows you to upload PDF documents, automatically chunk and embed the text using Ollama, store the vectors in ChromaDB, and perform semantic search across your document collection. The application features a clean, responsive interface and a robust backend designed for reliability and ease of deployment.
+Flowgo allows you to upload PDF documents, automatically chunk and embed the text using Ollama, store the vectors in ChromaDB, and perform semantic search across your document collection. The application features a clean, responsive interface and a robust backend designed for reliability and ease of deployment.
 
 ### Key Features
 
@@ -38,7 +38,7 @@ VectorGo allows you to upload PDF documents, automatically chunk and embed the t
 1. **Clone the repository**:
    ```bash
    git clone <repository-url>
-   cd vectorgo
+   cd flowgo
    ```
 
 2. **Start the development environment**:
@@ -49,7 +49,7 @@ VectorGo allows you to upload PDF documents, automatically chunk and embed the t
 
 3. **Pull the embedding model** (first time only):
    ```bash
-   docker exec -it vectorgo-ollama ollama pull embeddinggemma:300m
+   docker exec -it flowgo-ollama ollama pull embeddinggemma:300m
    ```
 
 4. **Build the application**:

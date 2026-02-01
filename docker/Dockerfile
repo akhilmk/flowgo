@@ -6,7 +6,7 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /app
 
 # Copy the pre-built binary
-COPY bin/vectorgo /app/vectorgo
+COPY bin/flowgo /app/flowgo
 
 # Copy the frontend static files
 COPY bin/frontend/dist /app/frontend/dist
@@ -18,5 +18,5 @@ EXPOSE 8080
 ENV PORT=8080
 
 # Run the binary
-CMD ["/app/vectorgo"]
+CMD ["/app/flowgo"]
 

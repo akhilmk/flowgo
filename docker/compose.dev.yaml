@@ -1,20 +1,20 @@
-name: vectorgo-dev
+name: flowgo-dev
 
 services:
   ollama:
     image: ollama/ollama:latest
-    container_name: vectorgo-ollama
+    container_name: flowgo-ollama
     ports:
       - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
     restart: always
     networks:
-      - vectorgo-dev
+      - flowgo-dev
 
   chromadb:
     image: chromadb/chroma:latest
-    container_name: vectorgo-chromadb
+    container_name: flowgo-chromadb
     ports:
       - "8000:8000"
     volumes:
@@ -23,23 +23,23 @@ services:
       - IS_PERSISTENT=TRUE
     restart: always
     networks:
-      - vectorgo-dev
+      - flowgo-dev
 
   # Container to help building node frontend
   node:
     image: node:24-alpine
-    container_name: vectorgo-node-dev
+    container_name: flowgo-node-dev
     working_dir: /app
     volumes:
       - ../frontend:/app
     user: "${USER_ID:-1000}:${GROUP_ID:-1000}"
     entrypoint: ["tail", "-f", "/dev/null"]
     networks:
-      - vectorgo-dev
+      - flowgo-dev
 
 networks:
-  vectorgo-dev:
-    name: vectorgo-dev
+  flowgo-dev:
+    name: flowgo-dev
 
 volumes:
   ollama_data:

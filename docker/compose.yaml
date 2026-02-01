@@ -1,25 +1,25 @@
-name: vectorgo
+name: flowgo
 
 services:
   ollama:
     image: ollama/ollama:latest
-    container_name: vectorgo-ollama
+    container_name: flowgo-ollama
     volumes:
       - ollama_data:/root/.ollama
     restart: always
 
   chromadb:
     image: chromadb/chroma:latest
-    container_name: vectorgo-chromadb
+    container_name: flowgo-chromadb
     volumes:
       - chroma_data:/data
     environment:
       - IS_PERSISTENT=TRUE
     restart: always
 
-  vectorgo-app:
+  flowgo-app:
     image: ${APP_IMAGE}:${APP_IMAGE_TAG}
-    container_name: vectorgo-app
+    container_name: flowgo-app
     restart: always
     environment:
       - OLLAMA_URL=http://ollama:11434
@@ -32,14 +32,14 @@ services:
       - chromadb
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.vectorgo-app.rule=Host(`${DOMAIN:-localhost}`)"
-      - "traefik.http.routers.vectorgo-app.entrypoints=websecure"
-      - "traefik.http.routers.vectorgo-app.tls.certresolver=myresolver"
-      - "traefik.http.services.vectorgo-app.loadbalancer.server.port=${PORT}"
+      - "traefik.http.routers.flowgo-app.rule=Host(`${DOMAIN:-localhost}`)"
+      - "traefik.http.routers.flowgo-app.entrypoints=websecure"
+      - "traefik.http.routers.flowgo-app.tls.certresolver=myresolver"
+      - "traefik.http.services.flowgo-app.loadbalancer.server.port=${PORT}"
 
   traefik:
     image: traefik:v2.11
-    container_name: vectorgo-traefik
+    container_name: flowgo-traefik
     restart: always
     environment:
       - "DOCKER_HOST=unix:///var/run/docker.sock"
