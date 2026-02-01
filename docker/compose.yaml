@@ -1,71 +1,127 @@
-name: flowgo
+# use this compose with existing traefik setup
+
+name: ${COMPOSE_NAME}
 
 services:
+  # Base Profile: Flowise
+  flowise-db:
+    image: postgres:16-alpine
+    restart: always
+    profiles: ["flowise"]
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - flowise-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - default
+
+  flowise:
+    image: flowiseai/flowise:latest
+    restart: always
+    profiles: ["flowise"]
+    environment:
+      - PORT=${FLOWISE_PORT}
+      - FLOWISE_USERNAME=${FLOWISE_USERNAME}
+      - FLOWISE_PASSWORD=${FLOWISE_PASSWORD}
+      - DATABASE_TYPE=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_HOST=flowise-db
+      - DATABASE_NAME=${POSTGRES_DB}
+      - DATABASE_USER=${POSTGRES_USER}
+      - DATABASE_PASSWORD=${POSTGRES_PASSWORD}
+      - APIKEY_PATH=/root/.flowise
+      - SECRETKEY_PATH=/root/.flowise
+      - LOG_LEVEL=info
+      - LOG_PATH=/root/.flowise/logs
+    volumes:
+      - flowise-data:/root/.flowise
+    depends_on:
+      flowise-db:
+        condition: service_healthy
+    networks:
+      - default
+      - traefik-proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.flowise.rule=Host(`${FLOWISE_SUBDOMAIN}.${DOMAIN_NAME}`)"
+      - "traefik.http.routers.flowise.entrypoints=websecure"
+      - "traefik.http.routers.flowise.tls.certresolver=${TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.services.flowise.loadbalancer.server.port=${FLOWISE_PORT}"
+
+  # Profile: Upload (Flowgo Stack)
   ollama:
     image: ollama/ollama:latest
-    container_name: flowgo-ollama
+    profiles: ["upload"]
     volumes:
       - ollama_data:/root/.ollama
     restart: always
+    networks:
+      - default
 
   chromadb:
     image: chromadb/chroma:latest
-    container_name: flowgo-chromadb
+    profiles: ["upload"]
+    # ports:
+    #   - "127.0.0.1:8000:8000"
     volumes:
       - chroma_data:/data
     environment:
       - IS_PERSISTENT=TRUE
+      - CHROMA_SERVER_CORS_ALLOW_ORIGINS=["*"]
+      # OpenTelemetry Config (Optional - pre-configured)
+      # - CHROMA_OTEL_COLLECTION_ENDPOINT=http://otel-collector:4317
+      # - CHROMA_OTEL_SERVICE_NAME=chromadb
+      # - CHROMA_OTEL_GRANULARITY=all
     restart: always
+    networks:
+      - default
 
-  flowgo-app:
+  flowgo:
     image: ${APP_IMAGE}:${APP_IMAGE_TAG}
-    container_name: flowgo-app
     restart: always
+    profiles: ["upload"]
     environment:
-      - OLLAMA_URL=http://ollama:11434
-      - CHROMA_URL=http://chromadb:8000
+      - OLLAMA_URL=${OLLAMA_URL}
+      - CHROMA_URL=${CHROMA_URL}
       - EMBEDDING_MODEL=${EMBEDDING_MODEL}
       - COLLECTION_NAME=${COLLECTION_NAME}
-      - PORT=${PORT}
+      - ADMIN_USERNAME=${ADMIN_USERNAME}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - PORT=${APP_PORT}
     depends_on:
       - ollama
       - chromadb
+    networks:
+      - default
+      - traefik-proxy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.flowgo-app.rule=Host(`${DOMAIN:-localhost}`)"
-      - "traefik.http.routers.flowgo-app.entrypoints=websecure"
-      - "traefik.http.routers.flowgo-app.tls.certresolver=myresolver"
-      - "traefik.http.services.flowgo-app.loadbalancer.server.port=${PORT}"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.flowgo.rule=Host(`${FLOWISE_SUBDOMAIN}.${DOMAIN_NAME}`) && PathPrefix(`${APP_ROUTE_PATH}`)"
+      - "traefik.http.routers.flowgo.entrypoints=websecure"
+      - "traefik.http.routers.flowgo.tls.certresolver=${TRAEFIK_CERT_RESOLVER}"
+      # Middleware to strip ${APP_ROUTE_PATH} prefix so app sees /
+      - "traefik.http.middlewares.flowgo-strip.stripprefix.prefixes=${APP_ROUTE_PATH}"
+      - "traefik.http.routers.flowgo.middlewares=flowgo-strip"
+      - "traefik.http.services.flowgo.loadbalancer.server.port=${APP_PORT}"
 
-  traefik:
-    image: traefik:v2.11
-    container_name: flowgo-traefik
-    restart: always
-    environment:
-      - "DOCKER_HOST=unix:///var/run/docker.sock"
-    command:
-      - "--api.insecure=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
-      - "--certificatesresolvers.myresolver.acme.email=${ACME_EMAIL:-admin@example.com}"
-      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
-      # Redirect HTTP to HTTPS
-      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
-      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
-    ports:
-      - "80:80"
-      - "443:443"
-      - "${TRAEFIK_DASHBOARD_PORT:-8081}:8080"
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "letsencrypt_data:/letsencrypt"
-    security_opt:
-      - label:disable
+networks:
+  default:
+  traefik-proxy:
+    external: true
+    name: ${TRAEFIK_NETWORK}
 
 volumes:
-  ollama_data:
+  flowise-db-data:
+  flowise-data:
   chroma_data:
-  letsencrypt_data:
+  ollama_data:
