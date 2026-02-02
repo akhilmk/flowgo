@@ -32,14 +32,27 @@
   <div class="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 border border-white/50 backdrop-blur-sm">
     <div class="text-center mb-8">
       <div class="flex justify-center mb-4">
-        <div class="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
-          <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        <div class="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-200 ring-4 ring-indigo-50">
+          <svg class="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <!-- Database Cylinder Base -->
+            <path d="M4 7v10c0 2.2 3.6 4 8 4s8-1.8 8-4V7"></path>
+            <path d="M4 7c0 2.2 3.6 4 8 4s8-1.8 8-4-3.6-4-8-4-8 1.8-8 4z"></path>
+            <path d="M4 12c0 2.2 3.6 4 8 4s8-1.8 8-4"></path>
+            
+            <!-- AI Sparkle/Neural Node Overlay -->
+            <path d="M12 11v-3"></path>
+            <circle cx="12" cy="7" r="1.5" fill="currentColor" stroke="none"></circle>
+            
+            <path d="M12 7l-4-2"></path>
+            <circle cx="8" cy="5" r="1" fill="currentColor" stroke="none"></circle>
+            
+            <path d="M12 7l4-2"></path> 
+            <circle cx="16" cy="5" r="1" fill="currentColor" stroke="none"></circle>
           </svg>
         </div>
       </div>
-      <h1 class="text-2xl font-bold text-slate-800">Welcome Back</h1>
-      <p class="text-slate-500 mt-2">Sign in to access Flowgo</p>
+      <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Gowise</h1>
+      <p class="text-slate-500 mt-2 font-medium">AI-Powered Knowledge Base</p>
     </div>
 
     <form on:submit|preventDefault={handleLogin} class="space-y-6">

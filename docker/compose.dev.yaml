@@ -1,20 +1,20 @@
-name: flowgo-dev
+name: gowise-dev
 
 services:
   ollama:
     image: ollama/ollama:0.15.4
-    container_name: flowgo-ollama
+    container_name: gowise-ollama
     ports:
       - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
     restart: always
     networks:
-      - flowgo-dev
+      - gowise-dev
 
   chromadb:
     image: chromadb/chroma:1.4.1
-    container_name: flowgo-chromadb
+    container_name: gowise-chromadb
     ports:
       - "8000:8000"
     volumes:
@@ -23,23 +23,23 @@ services:
       - IS_PERSISTENT=TRUE
     restart: always
     networks:
-      - flowgo-dev
+      - gowise-dev
 
   # Container to help building node frontend
   node:
     image: node:24-alpine
-    container_name: flowgo-node-dev
+    container_name: gowise-node-dev
     working_dir: /app
     volumes:
       - ../frontend:/app
     user: "${USER_ID:-1000}:${GROUP_ID:-1000}"
     entrypoint: ["tail", "-f", "/dev/null"]
     networks:
-      - flowgo-dev
+      - gowise-dev
 
 networks:
-  flowgo-dev:
-    name: flowgo-dev
+  gowise-dev:
+    name: gowise-dev
 
 volumes:
   ollama_data:

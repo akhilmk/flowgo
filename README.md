@@ -1,10 +1,10 @@
-# Flowgo
+# gowise
 
-Flowgo is a modern PDF processing and semantic search application that leverages vector embeddings to enable intelligent document search and retrieval.
+gowise is a modern PDF processing and semantic search application that leverages vector embeddings to enable intelligent document search and retrieval.
 
 ## 🚀 Overview
 
-Flowgo allows you to upload PDF documents, automatically chunk and embed the text using Ollama, store the vectors in ChromaDB, and perform semantic search across your document collection. The application features a clean, responsive interface and a robust backend designed for reliability and ease of deployment.
+gowise allows you to upload PDF documents, automatically chunk and embed the text using Ollama, store the vectors in ChromaDB, and perform semantic search across your document collection. The application features a clean, responsive interface and a robust backend designed for reliability and ease of deployment.
 
 ### Key Features
 
@@ -38,7 +38,7 @@ Flowgo allows you to upload PDF documents, automatically chunk and embed the tex
 1. **Clone the repository**:
    ```bash
    git clone <repository-url>
-   cd flowgo
+   cd gowise
    ```
 
 2. **Start the development environment**:
@@ -49,7 +49,7 @@ Flowgo allows you to upload PDF documents, automatically chunk and embed the tex
 
 3. **Pull the embedding model** (first time only):
    ```bash
-   docker exec -it flowgo-ollama ollama pull embeddinggemma:300m
+   docker exec -it gowise-ollama ollama pull embeddinggemma:300m
    ```
 
 4. **Build the application**:
@@ -62,7 +62,7 @@ Flowgo allows you to upload PDF documents, automatically chunk and embed the tex
    make run
    ```
 
-The app will be available at [http://localhost:8080](http://localhost:8080).
+The app will be available at [http://localhost:8081](http://localhost:8081).
 
 ---
 

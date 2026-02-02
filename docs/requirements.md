@@ -1,8 +1,8 @@
-# Flowgo - Requirements Document
+# gowise - Requirements Document
 
 ## Overview
 
-Flowgo is a PDF processing and semantic search application that enables users to upload PDF documents, automatically chunk and embed the text content, and perform intelligent semantic searches across their document collection.
+gowise is a PDF processing and semantic search application that enables users to upload PDF documents, automatically chunk and embed the text content, and perform intelligent semantic searches across their document collection.
 
 ---
 
@@ -96,7 +96,7 @@ Flowgo is a PDF processing and semantic search application that enables users to
 
 #### 6.3 Information Display
 - **FR-6.3.1**: The UI shall display a "How It Works" section explaining the 3-step process
-- **FR-6.3.2**: The UI shall show Flowgo branding and logo
+- **FR-6.3.2**: The UI shall show gowise branding and logo
 - **FR-6.3.3**: The UI shall use a modern, gradient-based design aesthetic
 
 ---
@@ -189,7 +189,7 @@ Required environment variables:
 - `CHROMA_URL`: ChromaDB service URL (default: http://localhost:8000)
 - `EMBEDDING_MODEL`: Embedding model name (default: embeddinggemma:300m)
 - `COLLECTION_NAME`: ChromaDB collection name (default: documents)
-- `PORT`: Server port (default: 8080)
+- `PORT`: Server port (default: 8081)
 
 ### 4. Data Models
 

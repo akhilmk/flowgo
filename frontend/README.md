@@ -24,7 +24,7 @@ All Svelte components now use the REST API client:
 - Removed `src/lib/client.ts` (old ConnectRPC client)
 
 ### 4. API Configuration
-The frontend now connects to `http://localhost:8080/api` (configurable in `api.ts`)
+The frontend now connects to `http://localhost:8081/api` (configurable in `api.ts`)
 
 ## Building the Frontend
 

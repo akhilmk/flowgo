@@ -62,7 +62,7 @@
             </div>
             <div>
                 <h1 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 tracking-tight">
-                Flowgo
+                Gowise
               </h1>
               <p class="text-xs text-slate-500 font-medium">PDF Vector Search & Embedding</p>
             </div>

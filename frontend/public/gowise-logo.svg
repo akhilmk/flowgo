@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Database Cylinder Base -->
+  <path d="M4 7v10c0 2.2 3.6 4 8 4s8-1.8 8-4V7"></path>
+  <path d="M4 7c0 2.2 3.6 4 8 4s8-1.8 8-4-3.6-4-8-4-8 1.8-8 4z"></path>
+  <path d="M4 12c0 2.2 3.6 4 8 4s8-1.8 8-4"></path>
+
+  <!-- AI Sparkle/Neural Node Overlay -->
+  <!-- A central node connecting to the data -->
+  <path d="M12 11v-3"></path>
+  <circle cx="12" cy="7" r="1.5" fill="#4F46E5" stroke="none"></circle>
+  
+  <!-- Network connections radiating from center -->
+  <path d="M12 7l-4-2"></path>
+  <circle cx="8" cy="5" r="1" fill="#4F46E5" stroke="none"></circle>
+  
+  <path d="M12 7l4-2"></path> 
+  <circle cx="16" cy="5" r="1" fill="#4F46E5" stroke="none"></circle>
+</svg>

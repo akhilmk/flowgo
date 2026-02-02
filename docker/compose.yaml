@@ -56,7 +56,7 @@ services:
       - "traefik.http.routers.flowise.tls.certresolver=${TRAEFIK_CERT_RESOLVER}"
       - "traefik.http.services.flowise.loadbalancer.server.port=${FLOWISE_PORT}"
 
-  # Profile: Upload (Flowgo Stack)
+  # Profile: Upload (gowise Stack)
   ollama:
     image: ollama/ollama:0.15.4
     profiles: ["upload"]
@@ -84,7 +84,7 @@ services:
     networks:
       - default
 
-  flowgo:
+  gowise:
     image: ${APP_IMAGE}:${APP_IMAGE_TAG}
     restart: always
     profiles: ["upload"]
@@ -106,10 +106,10 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=${TRAEFIK_NETWORK}"
-      - "traefik.http.routers.flowgo.rule=Host(`${FLOWGO_SUBDOMAIN}.${DOMAIN_NAME}`)"
-      - "traefik.http.routers.flowgo.entrypoints=websecure"
-      - "traefik.http.routers.flowgo.tls.certresolver=${TRAEFIK_CERT_RESOLVER}"
-      - "traefik.http.services.flowgo.loadbalancer.server.port=${APP_PORT}"
+      - "traefik.http.routers.gowise.rule=Host(`${GOWISE_SUBDOMAIN}.${DOMAIN_NAME}`)"
+      - "traefik.http.routers.gowise.entrypoints=websecure"
+      - "traefik.http.routers.gowise.tls.certresolver=${TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.services.gowise.loadbalancer.server.port=${APP_PORT}"
 
 networks:
   default:

@@ -1,4 +1,4 @@
-module github.com/akhilmk/flowgo
+module github.com/akhilmk/gowise
 
 go 1.25.5
 

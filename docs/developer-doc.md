@@ -1,4 +1,4 @@
-# Flowgo Development Commands
+# gowise Development Commands
 
 This project uses a `Makefile` to simplify development tasks. Environment variables are automatically loaded from `docker/.env.dev`.
 
@@ -19,7 +19,7 @@ This project uses a `Makefile` to simplify development tasks. Environment variab
 
 ## App Run Commands
 
-- `make run`: Starts the Flowgo application container locally. It automatically handles container removal if one is already running.
+- `make run`: Starts the gowise application container locally. It automatically handles container removal if one is already running.
 - `make logs`: Follows the application container logs.
 - `make app-shell`: Opens an interactive shell inside the running application container for debugging.
 
@@ -38,7 +38,7 @@ This project uses a `Makefile` to simplify development tasks. Environment variab
 
 ## API Endpoints
 
-Flowgo provides the following REST API endpoints:
+gowise provides the following REST API endpoints:
 
 ### Health Check
 - **GET** `/` - Returns service status and version information
@@ -74,7 +74,7 @@ Flowgo provides the following REST API endpoints:
 
 2. **Pull the Ollama embedding model** (first time only):
    ```bash
-   docker exec -it flowgo-ollama ollama pull embeddinggemma:300m
+   docker exec -it gowise-ollama ollama pull embeddinggemma:300m
    ```
 
 3. **Install frontend dependencies** (first time only):
@@ -93,7 +93,7 @@ Flowgo provides the following REST API endpoints:
    ```
 
 6. **Access the application**:
-   - Open your browser to [http://localhost:8080](http://localhost:8080)
+   - Open your browser to [http://localhost:8081](http://localhost:8081)
 
 ### During Development
 
@@ -140,19 +140,19 @@ make dev-down
 ### Ollama Model Not Found
 If you get embedding errors, ensure the model is pulled:
 ```bash
-docker exec -it flowgo-ollama ollama pull embeddinggemma:300m
+docker exec -it gowise-ollama ollama pull embeddinggemma:300m
 ```
 
 ### ChromaDB Connection Issues
 Verify ChromaDB is running:
 ```bash
-docker ps | grep flowgo-chromadb
+docker ps | grep gowise-chromadb
 ```
 
 ### Network Issues
-Ensure the `flowgo-dev` network exists:
+Ensure the `gowise-dev` network exists:
 ```bash
-docker network ls | grep flowgo-dev
+docker network ls | grep gowise-dev
 ```
 
 If not, restart the dev environment:
