@@ -21,6 +21,7 @@ type Config struct {
 	ChromaURL     string
 	ChromaAPIBase string
 	DefaultModel  string
+	TargetModels  []string
 	Collection    string
 }
 
@@ -36,12 +37,30 @@ func getEnv(key, defaultValue string) string {
 }
 
 func NewHandler() *Handler {
+	envModels := getEnv("EMBEDDING_MODELS", "")
+	var targetModels []string
+
+	// Parse comma-separated models
+	parts := strings.Split(envModels, ",")
+	for _, p := range parts {
+		if trimmed := strings.TrimSpace(p); trimmed != "" {
+			targetModels = append(targetModels, trimmed)
+		}
+	}
+
+	// Validate configuration
+	if len(targetModels) == 0 {
+		log.Printf("[CRITICAL ERROR] EMBEDDING_MODELS environment variable is required but missing. Uploads and search will fail!")
+		targetModels = []string{"UNCONFIGURED_MODEL"}
+	}
+
 	h := &Handler{
 		config: Config{
 			OllamaURL:     getEnv("OLLAMA_URL", "http://localhost:11434"),
 			ChromaURL:     getEnv("CHROMA_URL", "http://localhost:8000"),
 			ChromaAPIBase: "/api/v2/tenants/default_tenant/databases/default_database/collections",
-			DefaultModel:  getEnv("EMBEDDING_MODEL", "embeddinggemma:300m"),
+			DefaultModel:  targetModels[0], // Use first model as default
+			TargetModels:  targetModels,
 			Collection:    getEnv("COLLECTION_NAME", "documents"),
 		},
 	}
@@ -59,6 +78,99 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux, mw func(http.HandlerFunc) h
 	mux.HandleFunc("/api/stats", mw(h.HandleStats))
 	mux.HandleFunc("/api/files/", mw(h.HandleDeleteFile))
 	mux.HandleFunc("/api/models", mw(h.HandleModels))
+}
+
+func (h *Handler) initializeEmbeddingModel() {
+	log.Printf("[STARTUP] Initializing %d embedding models", len(h.config.TargetModels))
+
+	// Check if Ollama is reachable once
+	resp, err := http.Get(h.config.OllamaURL + "/api/tags")
+	if err != nil {
+		log.Printf("[STARTUP WARNING] Failed to connect to Ollama: %v", err)
+		log.Printf("[STARTUP WARNING] Skipping model initialization - please ensure Ollama is running")
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("[STARTUP WARNING] Ollama returned status %d, skipping model initialization", resp.StatusCode)
+		return
+	}
+
+	var modelsResp struct {
+		Models []struct {
+			Name string `json:"name"`
+		} `json:"models"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&modelsResp); err != nil {
+		log.Printf("[STARTUP WARNING] Failed to decode models response: %v", err)
+		return
+	}
+
+	// Iterate through each target model
+	for _, targetModel := range h.config.TargetModels {
+		// Check if model already exists
+		modelExists := false
+		for _, model := range modelsResp.Models {
+			if model.Name == targetModel {
+				modelExists = true
+				break
+			}
+		}
+
+		if modelExists {
+			log.Printf("[STARTUP] Embedding model '%s' already available", targetModel)
+			continue
+		}
+
+		// Pull the model
+		log.Printf("[STARTUP] Pulling embedding model '%s' (this may take a few minutes)...", targetModel)
+
+		pullReq := map[string]string{"name": targetModel}
+		pullBody, _ := json.Marshal(pullReq)
+
+		pullResp, err := http.Post(h.config.OllamaURL+"/api/pull", "application/json", bytes.NewBuffer(pullBody))
+		if err != nil {
+			log.Printf("[STARTUP WARNING] Failed to pull model %s: %v", targetModel, err)
+			log.Printf("[STARTUP WARNING] You may need to manually run: ollama pull %s", targetModel)
+			continue
+		}
+
+		// We need to defer close inside the loop or handle it explicitly.
+		// Since defer runs at function exit, doing it in a loop is bad practice (accumulates file descriptors).
+		// Better to wrap pulling logic in a closure or just not use defer here and close explicitly.
+		// Let's close explicitly.
+
+		if pullResp.StatusCode != http.StatusOK {
+			body, _ := io.ReadAll(pullResp.Body)
+			pullResp.Body.Close()
+			log.Printf("[STARTUP WARNING] Failed to pull model %s (status %d): %s", targetModel, pullResp.StatusCode, string(body))
+			continue
+		}
+
+		// Read pull progress
+		decoder := json.NewDecoder(pullResp.Body)
+		lastLogTime := time.Time{}
+
+		for {
+			var progress struct {
+				Status string `json:"status"`
+			}
+			if err := decoder.Decode(&progress); err != nil {
+				break
+			}
+			if progress.Status != "" {
+				if time.Since(lastLogTime) >= 5*time.Second {
+					log.Printf("[STARTUP] Model pull (%s): %s", targetModel, progress.Status)
+					lastLogTime = time.Now()
+				}
+			}
+		}
+		pullResp.Body.Close()
+		log.Printf("[STARTUP] Successfully initialized embedding model: %s", targetModel)
+	}
+	log.Printf("[STARTUP] All model initializations complete")
 }
 
 // Request/Response Structs
@@ -755,89 +867,4 @@ func ChunkText(text string, size int, stride int) []string {
 		}
 	}
 	return chunks
-}
-
-func (h *Handler) initializeEmbeddingModel() {
-	log.Printf("[STARTUP] Initializing embedding model: %s", h.config.DefaultModel)
-
-	// Check if model exists
-	resp, err := http.Get(h.config.OllamaURL + "/api/tags")
-	if err != nil {
-		log.Printf("[STARTUP WARNING] Failed to connect to Ollama: %v", err)
-		log.Printf("[STARTUP WARNING] Skipping model initialization - please ensure Ollama is running")
-		return
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		log.Printf("[STARTUP WARNING] Ollama returned status %d, skipping model initialization", resp.StatusCode)
-		return
-	}
-
-	var modelsResp struct {
-		Models []struct {
-			Name string `json:"name"`
-		} `json:"models"`
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(&modelsResp); err != nil {
-		log.Printf("[STARTUP WARNING] Failed to decode models response: %v", err)
-		return
-	}
-
-	// Check if model already exists
-	modelExists := false
-	for _, model := range modelsResp.Models {
-		if model.Name == h.config.DefaultModel {
-			modelExists = true
-			break
-		}
-	}
-
-	if modelExists {
-		log.Printf("[STARTUP] Embedding model '%s' already available", h.config.DefaultModel)
-		return
-	}
-
-	// Pull the model
-	log.Printf("[STARTUP] Pulling embedding model '%s' (this may take a few minutes)...", h.config.DefaultModel)
-
-	pullReq := map[string]string{"name": h.config.DefaultModel}
-	pullBody, _ := json.Marshal(pullReq)
-
-	pullResp, err := http.Post(h.config.OllamaURL+"/api/pull", "application/json", bytes.NewBuffer(pullBody))
-	if err != nil {
-		log.Printf("[STARTUP WARNING] Failed to pull model: %v", err)
-		log.Printf("[STARTUP WARNING] You may need to manually run: ollama pull %s", h.config.DefaultModel)
-		return
-	}
-	defer pullResp.Body.Close()
-
-	if pullResp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(pullResp.Body)
-		log.Printf("[STARTUP WARNING] Failed to pull model (status %d): %s", pullResp.StatusCode, string(body))
-		log.Printf("[STARTUP WARNING] You may need to manually run: ollama pull %s", h.config.DefaultModel)
-		return
-	}
-
-	// Read pull progress
-	decoder := json.NewDecoder(pullResp.Body)
-	lastLogTime := time.Time{} // Initialize to zero time to ensure first message might be logged or just rely on loop
-
-	for {
-		var progress struct {
-			Status string `json:"status"`
-		}
-		if err := decoder.Decode(&progress); err != nil {
-			break
-		}
-		if progress.Status != "" {
-			if time.Since(lastLogTime) >= 5*time.Second {
-				log.Printf("[STARTUP] Model pull: %s", progress.Status)
-				lastLogTime = time.Now()
-			}
-		}
-	}
-
-	log.Printf("[STARTUP] Successfully initialized embedding model: %s", h.config.DefaultModel)
 }
