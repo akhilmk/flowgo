@@ -36,7 +36,7 @@ func getEnv(key, defaultValue string) string {
 }
 
 func NewHandler() *Handler {
-	return &Handler{
+	h := &Handler{
 		config: Config{
 			OllamaURL:     getEnv("OLLAMA_URL", "http://localhost:11434"),
 			ChromaURL:     getEnv("CHROMA_URL", "http://localhost:8000"),
@@ -45,6 +45,11 @@ func NewHandler() *Handler {
 			Collection:    getEnv("COLLECTION_NAME", "documents"),
 		},
 	}
+
+	// Initialize embedding model on startup (async)
+	go h.initializeEmbeddingModel()
+
+	return h
 }
 
 func (h *Handler) RegisterRoutes(mux *http.ServeMux, mw func(http.HandlerFunc) http.HandlerFunc) {
@@ -53,6 +58,7 @@ func (h *Handler) RegisterRoutes(mux *http.ServeMux, mw func(http.HandlerFunc) h
 	mux.HandleFunc("/api/search", mw(h.HandleSearch))
 	mux.HandleFunc("/api/stats", mw(h.HandleStats))
 	mux.HandleFunc("/api/files/", mw(h.HandleDeleteFile))
+	mux.HandleFunc("/api/models", mw(h.HandleModels))
 }
 
 // Request/Response Structs
@@ -109,7 +115,49 @@ type StatsResponse struct {
 	FileChunkCounts map[string]int `json:"file_chunk_counts"`
 }
 
+type OllamaModel struct {
+	Name       string `json:"name"`
+	ModifiedAt string `json:"modified_at"`
+	Size       int64  `json:"size"`
+}
+
+type OllamaModelsResponse struct {
+	Models []OllamaModel `json:"models"`
+}
+
 // Handlers
+
+func (h *Handler) HandleModels(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	log.Printf("Fetching available Ollama models")
+
+	resp, err := http.Get(h.config.OllamaURL + "/api/tags")
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to fetch models: %v", err), http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		http.Error(w, fmt.Sprintf("ollama returned status %d: %s", resp.StatusCode, string(body)), http.StatusInternalServerError)
+		return
+	}
+
+	var modelsResp OllamaModelsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&modelsResp); err != nil {
+		http.Error(w, fmt.Sprintf("failed to decode response: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("Found %d Ollama models", len(modelsResp.Models))
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(modelsResp)
+}
 
 func (h *Handler) HandleReset(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost && r.Method != http.MethodGet {
@@ -185,8 +233,14 @@ func (h *Handler) HandleUpload(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	log.Printf("[UPLOAD CONFIG] File: %s | Chunk size: %d words | Stride: %d words | Overlap: %d words",
-		header.Filename, chunkSize, chunkStride, chunkSize-chunkStride)
+	// Get embedding model (default to config if not provided)
+	embeddingModel := h.config.DefaultModel
+	if em := r.FormValue("embeddingModel"); em != "" {
+		embeddingModel = em
+	}
+
+	log.Printf("[UPLOAD CONFIG] File: %s | Chunk size: %d words | Stride: %d words | Overlap: %d words | Model: %s",
+		header.Filename, chunkSize, chunkStride, chunkSize-chunkStride, embeddingModel)
 
 	// Save file temporarily
 	tmpFile, err := os.CreateTemp("", "upload-*.pdf")
@@ -224,7 +278,7 @@ func (h *Handler) HandleUpload(w http.ResponseWriter, r *http.Request) {
 		flusher.Flush()
 	}
 
-	err = h.processPDF(tmpFile.Name(), header.Filename, chunkSize, chunkStride, progressFunc)
+	err = h.processPDF(tmpFile.Name(), header.Filename, chunkSize, chunkStride, embeddingModel, progressFunc)
 	if err != nil {
 		log.Printf("Error processing PDF: %v", err)
 		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
@@ -254,7 +308,7 @@ func (h *Handler) HandleSearch(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Searching for: %s", query)
 
-	embedding, err := h.getEmbedding(query)
+	embedding, err := h.getEmbedding(query, h.config.DefaultModel)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to get embedding: %v", err), http.StatusInternalServerError)
 		return
@@ -414,7 +468,7 @@ func (h *Handler) HandleDeleteFile(w http.ResponseWriter, r *http.Request) {
 
 // Helpers
 
-func (h *Handler) processPDF(path, filename string, chunkSize, chunkStride int, progress func(string)) error {
+func (h *Handler) processPDF(path, filename string, chunkSize, chunkStride int, embeddingModel string, progress func(string)) error {
 	log.Printf("[PDF PROCESSING START] File: %s | Path: %s", filename, path)
 
 	if progress != nil {
@@ -467,7 +521,7 @@ func (h *Handler) processPDF(path, filename string, chunkSize, chunkStride int, 
 		log.Printf("[CHUNK PROCESSING] File: %s | Chunk: %d/%d | Length: %d chars",
 			filename, i+1, len(chunks), len(chunk))
 
-		embedding, err := h.getEmbedding(chunk)
+		embedding, err := h.getEmbedding(chunk, embeddingModel)
 		if err != nil {
 			log.Printf("[CHUNK WARNING] File: %s | Chunk: %d/%d | Embedding failed: %v",
 				filename, i+1, len(chunks), err)
@@ -488,9 +542,9 @@ func (h *Handler) processPDF(path, filename string, chunkSize, chunkStride int, 
 	return nil
 }
 
-func (h *Handler) getEmbedding(text string) ([]float32, error) {
+func (h *Handler) getEmbedding(text string, model string) ([]float32, error) {
 	reqBody, _ := json.Marshal(EmbeddingRequest{
-		Model:  h.config.DefaultModel,
+		Model:  model,
 		Prompt: text,
 	})
 
@@ -701,4 +755,89 @@ func ChunkText(text string, size int, stride int) []string {
 		}
 	}
 	return chunks
+}
+
+func (h *Handler) initializeEmbeddingModel() {
+	log.Printf("[STARTUP] Initializing embedding model: %s", h.config.DefaultModel)
+
+	// Check if model exists
+	resp, err := http.Get(h.config.OllamaURL + "/api/tags")
+	if err != nil {
+		log.Printf("[STARTUP WARNING] Failed to connect to Ollama: %v", err)
+		log.Printf("[STARTUP WARNING] Skipping model initialization - please ensure Ollama is running")
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("[STARTUP WARNING] Ollama returned status %d, skipping model initialization", resp.StatusCode)
+		return
+	}
+
+	var modelsResp struct {
+		Models []struct {
+			Name string `json:"name"`
+		} `json:"models"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&modelsResp); err != nil {
+		log.Printf("[STARTUP WARNING] Failed to decode models response: %v", err)
+		return
+	}
+
+	// Check if model already exists
+	modelExists := false
+	for _, model := range modelsResp.Models {
+		if model.Name == h.config.DefaultModel {
+			modelExists = true
+			break
+		}
+	}
+
+	if modelExists {
+		log.Printf("[STARTUP] Embedding model '%s' already available", h.config.DefaultModel)
+		return
+	}
+
+	// Pull the model
+	log.Printf("[STARTUP] Pulling embedding model '%s' (this may take a few minutes)...", h.config.DefaultModel)
+
+	pullReq := map[string]string{"name": h.config.DefaultModel}
+	pullBody, _ := json.Marshal(pullReq)
+
+	pullResp, err := http.Post(h.config.OllamaURL+"/api/pull", "application/json", bytes.NewBuffer(pullBody))
+	if err != nil {
+		log.Printf("[STARTUP WARNING] Failed to pull model: %v", err)
+		log.Printf("[STARTUP WARNING] You may need to manually run: ollama pull %s", h.config.DefaultModel)
+		return
+	}
+	defer pullResp.Body.Close()
+
+	if pullResp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(pullResp.Body)
+		log.Printf("[STARTUP WARNING] Failed to pull model (status %d): %s", pullResp.StatusCode, string(body))
+		log.Printf("[STARTUP WARNING] You may need to manually run: ollama pull %s", h.config.DefaultModel)
+		return
+	}
+
+	// Read pull progress
+	decoder := json.NewDecoder(pullResp.Body)
+	lastLogTime := time.Time{} // Initialize to zero time to ensure first message might be logged or just rely on loop
+
+	for {
+		var progress struct {
+			Status string `json:"status"`
+		}
+		if err := decoder.Decode(&progress); err != nil {
+			break
+		}
+		if progress.Status != "" {
+			if time.Since(lastLogTime) >= 5*time.Second {
+				log.Printf("[STARTUP] Model pull: %s", progress.Status)
+				lastLogTime = time.Now()
+			}
+		}
+	}
+
+	log.Printf("[STARTUP] Successfully initialized embedding model: %s", h.config.DefaultModel)
 }

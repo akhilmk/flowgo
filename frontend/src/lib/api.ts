@@ -23,6 +23,12 @@ export interface StatsResult {
     file_chunk_counts: { [key: string]: number };
 }
 
+export interface OllamaModel {
+    name: string;
+    modified_at: string;
+    size: number;
+}
+
 class ApiError extends Error {
     constructor(public status: number, message: string) {
         super(message);
@@ -64,6 +70,13 @@ export const api = {
 
     logout() {
         localStorage.removeItem(TOKEN_KEY);
+    },
+
+    async getModels(): Promise<{ models: OllamaModel[] }> {
+        const response = await fetch(`${API_BASE_URL}/models`, {
+            headers: getAuthHeader()
+        });
+        return handleResponse<{ models: OllamaModel[] }>(response);
     },
 
     async uploadPDF(formData: FormData, onProgress?: (msg: string) => void, signal?: AbortSignal): Promise<ProcessingResult> {
@@ -172,3 +185,4 @@ export const api = {
         return handleResponse<{ status: string; filename: string }>(response);
     }
 };
+

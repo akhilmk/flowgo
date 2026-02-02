@@ -87,14 +87,14 @@ run:
 		-p 8080:8080 \
 		--network flowgo-dev \
 		-v $(PWD)/frontend/dist:/app/frontend/dist:ro \
-		-e OLLAMA_URL=http://flowgo-ollama:11434 \
-		-e CHROMA_URL=http://flowgo-chromadb:8000 \
+		-e OLLAMA_URL=$(OLLAMA_URL) \
+		-e CHROMA_URL=$(CHROMA_URL) \
 		-e EMBEDDING_MODEL=$(EMBEDDING_MODEL) \
 		-e COLLECTION_NAME=$(COLLECTION_NAME) \
 		-e ADMIN_USERNAME=$(ADMIN_USERNAME) \
 		-e ADMIN_PASSWORD=$(ADMIN_PASSWORD) \
 		-e JWT_SECRET=$(JWT_SECRET) \
-		-e PORT=8080 \
+		-e PORT=$(APP_PORT) \
 		$(IMAGE_NAME):latest
 	@echo "✓ Flowgo running at http://localhost:8080"
 
