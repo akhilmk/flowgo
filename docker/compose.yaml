@@ -23,7 +23,7 @@ services:
       - default
 
   flowise:
-    image: flowiseai/flowise:latest
+    image: flowiseai/flowise:3.0.12
     restart: always
     profiles: ["flowise"]
     environment:
@@ -58,7 +58,7 @@ services:
 
   # Profile: Upload (Flowgo Stack)
   ollama:
-    image: ollama/ollama:latest
+    image: ollama/ollama:0.15.4
     profiles: ["upload"]
     volumes:
       - ollama_data:/root/.ollama
@@ -67,7 +67,7 @@ services:
       - default
 
   chromadb:
-    image: chromadb/chroma:latest
+    image: chromadb/chroma:1.4.1
     profiles: ["upload"]
     # ports:
     #   - "127.0.0.1:8000:8000"

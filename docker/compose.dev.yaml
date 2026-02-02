@@ -2,7 +2,7 @@ name: flowgo-dev
 
 services:
   ollama:
-    image: ollama/ollama:latest
+    image: ollama/ollama:0.15.4
     container_name: flowgo-ollama
     ports:
       - "11434:11434"
@@ -13,7 +13,7 @@ services:
       - flowgo-dev
 
   chromadb:
-    image: chromadb/chroma:latest
+    image: chromadb/chroma:1.4.1
     container_name: flowgo-chromadb
     ports:
       - "8000:8000"
